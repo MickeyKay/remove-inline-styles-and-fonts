@@ -179,7 +179,8 @@ function risf_register_settings_field( $id, $title, $callback, $section, $page, 
 function risf_output_fields( $field ) {
 	
 	// Set defaults if empty
-	if ( !get_option( $field['id'] ) && isset( $field['args']['default'] ) )
+	$value = get_option( $field['id'] );
+	if ( empty( $value ) && isset( $field['args']['default'] ) )
 		update_option( $field['id'], $field['args']['default'] );
 
 	/* Output admin form elements for each settings field */
