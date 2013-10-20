@@ -303,13 +303,11 @@ function risf_do_meta_box( $post, $metabox ) {
 
 	echo '<input type="hidden" id="risf-exclude-risf-empty" name="_risf_exclude" value="empty" />';
 	echo '<input type="checkbox" id="risf-exclude" name="_risf_exclude" value="1" ' . checked( $value, '1', false ). '/> <label for="risf-exclude">Don\'t apply to this ' . $metabox['args']['post_type'] . '</label>';
+	echo '<br /><br /><em>Note: when checking/unchecking this box using the "Content" removal method, please update the post/page twice to see changes.';
 
 }
 
-function risf_save_meta_box( $content ) {
-
-	global $post;
-	$post_id = $post->ID;
+function risf_save_meta_box( $post_id, $post ) {
 
 	// Verify the nonce before proceeding
 	if ( !isset( $_POST['risf_nonce'] ) || !wp_verify_nonce( $_POST['risf_nonce'], basename( __FILE__ ) ) )
@@ -343,10 +341,8 @@ function risf_save_meta_box( $content ) {
 	elseif ( '' == $new_meta_value && $meta_value )
 		delete_post_meta( $post_id, $meta_key, $meta_value );
 
-	return $content;
-
 }
-add_action( 'content_save_pre', 'risf_save_meta_box', 0, 1 );
+add_action( 'save_post', 'risf_save_meta_box', 0, 2 );
 
 /**
  * Mimics intval() validation method but returns 10 instead of 0 on failure

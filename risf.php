@@ -29,7 +29,7 @@ require_once plugin_dir_path( __FILE__ ) . 'lib/HTMLPurifier.auto.php';
  *
  * Modified from: http://gomakethings.com/removing-wordpress-funk/
  */
-function clean_post_content( $content ) {   
+function clean_post_content( $content ) {
 
     global $post;
 
