@@ -59,6 +59,30 @@ function risf_register_settings() {
 	/**
 	 * Main Settings Section
 	 */
+	
+	// Parsing Method
+	$fields[] = array (
+		'id' => 'risf-parsing-method',
+		'title' => __( 'Parsing Method', 'risf' ),
+		'callback' => 'risf_output_fields',
+		'section' => 'risf-main-settings-section',
+		'page' => 'risf-settings-page',
+		'args' => array( 
+			'type' => 'radio',
+			'options' => array (
+				'htmlpurify' => array(
+					'label' => __( 'HTML Purify', 'risf' ),
+					'description' => __( 'More thorough. Automatically completes unclosed tags, removes malicious code, ensures standards compliance - <a href="http://htmlpurifier.org/">read more</a>.', 'risf' )
+				),
+				'regex' => array(
+					'label' => __( 'Regex', 'risf' ),
+					'description' => __( 'Less thorough. Uses simple pattern matching. Try using this method if the HTML Purify method is doing more than you want.', 'risf' )
+				),
+			),
+			'default' => 'htmlpurify',
+			'label_location' => 'below',
+		)
+	);
 
 	// Removal Method
 	$fields[] = array (
@@ -70,10 +94,17 @@ function risf_register_settings() {
 		'args' => array( 
 			'type' => 'radio',
 			'options' => array (
-				__( 'Output <em>(filters output, preserves styles/fonts in database - uses <code>the_content</code> filter)</em>', 'risf' ) => 'output',
-				__( 'Content <em>(filters actual content, removes styles/fonts from database - uses <code>content_save_pre</code> filter)</em>', 'risf' ) => 'content',
+				'output' => array(
+					'label' => __( 'Output', 'risf' ),
+					'description' => __( 'Filters output. Preserves styles/fonts in database, but filters the front-end output - uses <code>the_content</code> filter', 'risf' )
+				),
+				'content' => array(
+					'label' => __( 'Content', 'risf' ),
+					'description' => __( 'Warning: Filters actual content. Removes styles/fonts when post/page content is saved - uses <code>content_save_pre</code> filter.<br />Note: this method works on future saves, and will not retroactively modify post/page content.', 'risf' )
+				),
 			),
 			'default' => 'output',
+			'label_location' => 'below',
 		)
 	);
 
@@ -87,7 +118,7 @@ function risf_register_settings() {
 		'args' => array( 
 			'type' => 'text',
 			'validation' => 'risf_intval',
-			'description' => __( 'How soon to run the filter. Correlates to the <code>$priority</code> parameter in <code>add_filter()</code> - <a href="http://codex.wordpress.org/Function_Reference/add_filter">read more</a>', 'risf' ),
+			'description' => __( 'How soon to run the filter (default is 10). Correlates to the <code>$priority</code> parameter in <code>add_filter()</code> - <a href="http://codex.wordpress.org/Function_Reference/add_filter">read more</a>.', 'risf' ),
 			'default' => 10,
 		)
 	);
@@ -126,7 +157,7 @@ function risf_register_settings() {
 		'page' => 'risf-settings-page',
 		'args' => array( 
 			'type' => 'checkbox',
-			'label' => __( 'Remove <code>&lt;span&gt;</code> elements that are empty or have no attributes', 'risf' ),
+			'label' => __( 'Remove empty <code>&lt;span&gt;</code> elements', 'risf' ),
 		)
 	);
 
@@ -199,15 +230,23 @@ function risf_output_fields( $field ) {
 
 		// Checkbox
 		case 'checkbox':
-			echo '<input name="' . $field['id'] . '" id="' . $field['id'] . '" type="hidden" value="empty"' . '" />';
-			echo '<input name="' . $field['id'] . '" id="' . $field['id'] . '" type="' . $type . '" value="1"' . checked( get_option( $field['id'] ), 1, false ) . '" /> <label for="' . $field['id'] . '">' . $field['args']['label'] . '</label>';
+			echo '<input name="' . $field['id'] . '" id="' . $field['id'] . '-empty" type="hidden" value="empty"' . '" />';
+			echo '<input name="' . $field['id'] . '" id="' . $field['id'] . '" type="' . $type . '" value="1"' . checked( get_option( $field['id'] ), 1, false ) . '" />' . ( !empty( $field['args']['label'] ) ? ' <label for="' . $field['id'] . '">'  . $field['args']['label'] . '</label>' : '');
 			break;
 
 		// Radio Buttons
 		case 'radio':
 			$i = 1;
-			foreach ( $field['args']['options'] as $option => $value ) {
-				echo (1 != $i ? '<br />' : '') . '<input name="' . $field['id'] . '" id="' . $field['id'] . '-' . $value . '" type="' . $type . '" value="' . $value . '"' . checked( get_option( $field['id'] ), $value, false ) . '" /> <label for="' . $field['id'] . '-' . $value . '">' . $option . '</label>';
+			foreach ( $field['args']['options'] as $option => $option_array ) {
+				echo (1 != $i ? '<br />' : '') . '<input name="' . $field['id'] . '" id="' . $field['id'] . '-' . $option_array['label'] . '" type="' . $type . '" value="' . $option . '"' . checked( get_option( $field['id'] ), $option, false ) . '" /> ';
+				echo '<label for="' . $field['id'] . '-' . $option_array['label'] . '"><b>' . $option_array['label'] . '</b></label>'; 
+				if ( !empty( $option_array['description'] ) ) {
+					if ( isset( $field['args']['label_location'] ) && 'below' == $field['args']['label_location'] )
+						echo '<br />';
+					else
+						echo ' ';
+					echo '<em>' . $option_array['description'] . '</em>';
+				}
 				$i++;
 			}
 			break;
@@ -222,6 +261,92 @@ function risf_output_fields( $field ) {
 		echo '<br /><em>' . $field['args']['description'] . "</em>\n";
 
 }
+
+/**
+ * Outputs include/exclude metabox for all checked post types
+ *
+ * @package Remove Inline Styles & Fonts
+ * @since   1.0
+ */
+function risf_do_meta_boxes() {
+
+	foreach ( get_post_types( '', 'objects' ) as $post_type ) {
+
+		// See if post type is checked in the admin settings
+		$post_type_checked = get_option( 'risf-post-type-' . $post_type->name );
+
+		// Add a metabox to this post type if checked
+		if ( 1 == $post_type_checked )
+			add_meta_box('risf-meta-box', RISF_PLUGIN_NAME, 'risf_do_meta_box', $post_type->name, 'side', 'low', array( 'post_type' => $post_type->labels->singular_name ) );
+	}
+
+}
+add_action( 'add_meta_boxes', 'risf_do_meta_boxes' );
+
+/**
+ * Produces metabox
+ *
+ * @package Remove Inline Styles & Fonts
+ * @since   1.0
+ *
+ * @param   array $args callback arguments
+ */
+function risf_do_meta_box( $post, $metabox ) {
+	
+	global $post;
+
+	// Add an nonce field so we can check for it later.
+	wp_nonce_field( basename( __FILE__ ), 'risf_nonce' );
+
+	// Get post meta value
+	$value = get_post_meta( $post->ID, '_risf_exclude', true );
+
+	echo '<input type="hidden" id="risf-exclude-risf-empty" name="_risf_exclude" value="empty" />';
+	echo '<input type="checkbox" id="risf-exclude" name="_risf_exclude" value="1" ' . checked( $value, '1', false ). '/> <label for="risf-exclude">Don\'t apply to this ' . $metabox['args']['post_type'] . '</label>';
+
+}
+
+function risf_save_meta_box( $content ) {
+
+	global $post;
+	$post_id = $post->ID;
+
+	// Verify the nonce before proceeding
+	if ( !isset( $_POST['risf_nonce'] ) || !wp_verify_nonce( $_POST['risf_nonce'], basename( __FILE__ ) ) )
+		return $post_id;
+
+	// Get the post type object
+	$post_type = get_post_type_object( $post->post_type );
+
+	// Check if the current user has permission to edit the post
+	if ( !current_user_can( $post_type->cap->edit_post, $post_id ) )
+		return $post_id;
+
+	// Get the posted data and sanitize it for use as an HTML class 
+	$new_meta_value = ( isset( $_POST['_risf_exclude'] ) ? sanitize_html_class( $_POST['_risf_exclude'] ) : '' );
+
+	// Get the meta key
+	$meta_key = '_risf_exclude';
+
+	// Get the meta value of the custom field key
+	$meta_value = get_post_meta( $post_id, $meta_key, true );
+
+	// If a new meta value was added and there was no previous value, add it
+	if ( $new_meta_value && '' == $meta_value )
+		add_post_meta( $post_id, $meta_key, $new_meta_value, true );
+
+	// If the new meta value does not match the old value, update it 
+	elseif ( $new_meta_value && $new_meta_value != $meta_value )
+		update_post_meta( $post_id, $meta_key, $new_meta_value );
+
+	// If there is no new meta value but an old value exists, delete it
+	elseif ( '' == $new_meta_value && $meta_value )
+		delete_post_meta( $post_id, $meta_key, $meta_value );
+
+	return $content;
+
+}
+add_action( 'content_save_pre', 'risf_save_meta_box', 0, 1 );
 
 /**
  * Mimics intval() validation method but returns 10 instead of 0 on failure

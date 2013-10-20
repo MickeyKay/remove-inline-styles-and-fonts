@@ -29,26 +29,60 @@ require_once plugin_dir_path( __FILE__ ) . 'lib/HTMLPurifier.auto.php';
  *
  * Modified from: http://gomakethings.com/removing-wordpress-funk/
  */
-function clean_post_content( $content ) {
+function clean_post_content( $content ) {   
 
-    // Only do something if the current post type is checked in user settings
-    if ( 1 == get_option( 'risf-post-type-' . get_post_type() ) ) {
+    global $post;
 
-        $config = HTMLPurifier_Config::createDefault();
+    // Only do something if:
+    //  1. the current post type is checked in user settings
+    //  2. the metabox to exclude this specific post/page isn't checked
+    if ( 1 == get_option( 'risf-post-type-' . get_post_type() ) && 1 != get_post_meta( $post->ID, '_risf_exclude', true ) ) {
 
-        // Style attributes
-        if( get_option( 'risf-style-attributes' ) )
-            $config->set( 'CSS.AllowedProperties', array() );
+        /**
+         * Parsing Method 1: HTML Purifier
+         */
+        if ( 'htmlpurify' == get_option( 'risf-parsing-method' ) ) {
 
-        if( get_option( 'risf-empty-span-elements' ) )
-            $config->set( 'AutoFormat.RemoveSpansWithoutAttributes', true );
+            $config = HTMLPurifier_Config::createDefault();
 
-        $purifier = new HTMLPurifier( $config );
-        $content = $purifier->purify( stripslashes( $content ) );
+            // Style attributes
+            if( 1 == get_option( 'risf-style-attributes' ) )
+                $config->set( 'CSS.AllowedProperties', array() );
+                
+            // Remove <font> tags via regex until we figure out how to do it with HTML Purifier :)
+            if ( 1 == get_option( 'risf-font-tags' ) )
+                $config->set( 'HTML.ForbiddenElements', array( 'font' ) );
 
-        // Remove <font> tags via regex until we figure out how to do it with HTML Purifier :)
-        if ( get_option( 'risf-font-tags' ) )
-            $content = addslashes( preg_replace( '/\s<\/?font[^>]*>/', '', stripslashes( $content ) ) );
+            if( 1 == get_option( 'risf-empty-span-elements' ) )
+               $config->set( 'AutoFormat.RemoveSpansWithoutAttributes', true );
+
+            $purifier = new HTMLPurifier( $config );
+            $content = $purifier->purify( stripslashes( $content ) );
+
+        }
+
+        /**
+         * Parsing Method 2: Regex
+         */
+        if ( 'regex' == get_option( 'risf-parsing-method' ) ) {
+
+            // Remove style attribute
+            if ( 1 == get_option( 'risf-style-attributes' ) )
+                $content = addslashes( preg_replace( '/\s*style\s*=\s*[\"\'][^\"|\']*[\"\']/', '', stripslashes( $content ) ) );
+
+            // Remove <font> tag
+            if ( 1 == get_option( 'risf-font-tags' ) ) {
+                $content = addslashes( preg_replace( '/\s*<\s*font[^<]*>/', '', stripslashes( $content ) ) );
+                $content = addslashes( preg_replace( '/\s*<\/\s*font[^<]*>/', '', stripslashes( $content ) ) );
+            }
+            
+            // Remove <span> tags that are empty
+            if ( 1 == get_option( 'risf-font-tags' ) ) {
+                $content = addslashes( preg_replace( '/<\s*span\s*>/', '', stripslashes( $content ) ) );
+                $content = addslashes( preg_replace( '/<\/\s*span\s*>/', '', stripslashes( $content ) ) );
+            }
+
+        }
 
     }
 
@@ -63,4 +97,5 @@ if ( 'output' == get_option( 'risf-removal-method' ) )
 
 // Removal Method 2: Filter Content
 if ( 'content' == get_option( 'risf-removal-method' ) )
-    add_filter( 'content_save_pre', 'clean_post_content', get_option( 'risf-removal-method' ) );
+    add_filter( 'content_save_pre', 'clean_post_content', get_option( 'risf-filter-priority' ), 1 );
+
