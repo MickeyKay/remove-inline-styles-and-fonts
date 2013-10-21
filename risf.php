@@ -34,7 +34,7 @@ function clean_post_content( $content ) {
     global $post;
 
     // Only do something if:
-    //  1. the current post type is checked in user settings
+    //  1. the current post type is checked in user settings, AND
     //  2. the metabox to exclude this specific post/page isn't checked
     if ( 1 == get_option( 'risf-post-type-' . get_post_type() ) && 1 != get_post_meta( $post->ID, '_risf_exclude', true ) ) {
 
@@ -68,18 +68,18 @@ function clean_post_content( $content ) {
 
             // Remove style attribute
             if ( 1 == get_option( 'risf-style-attributes' ) )
-                $content = addslashes( preg_replace( '/\s*style\s*=\s*[\"\'][^\"|\']*[\"\']/', '', stripslashes( $content ) ) );
+                $content = preg_replace( '/\s*style\s*=\s*[\"\'][^\"|\']*[\"\']/', '', stripslashes( $content ) );
 
             // Remove <font> tag
             if ( 1 == get_option( 'risf-font-tags' ) ) {
-                $content = addslashes( preg_replace( '/\s*<\s*font[^<]*>/', '', stripslashes( $content ) ) );
-                $content = addslashes( preg_replace( '/\s*<\/\s*font[^<]*>/', '', stripslashes( $content ) ) );
+                $content = preg_replace( '/\s*<\s*font[^<]*>/', '', stripslashes( $content ) );
+                $content = preg_replace( '/\s*<\/\s*font[^<]*>/', '', stripslashes( $content ) );
             }
             
             // Remove <span> tags that are empty
-            if ( 1 == get_option( 'risf-font-tags' ) ) {
-                $content = addslashes( preg_replace( '/<\s*span\s*>/', '', stripslashes( $content ) ) );
-                $content = addslashes( preg_replace( '/<\/\s*span\s*>/', '', stripslashes( $content ) ) );
+            if ( 1 == get_option( 'risf-empty-span-elements' ) ) {
+                $content = preg_replace( '/\s*<\s*span\s*>\s*/', '', stripslashes( $content ) );
+                $content = preg_replace( '/\s*<\/\s*span\s*>\s*/', '', stripslashes( $content ) );
             }
 
         }
