@@ -33,10 +33,22 @@ function clean_post_content( $content ) {
 
     global $post;
 
+    // Whether this post type is included in the plugin settings
+    $include_post_type = ( 1 == get_option( 'risf-post-type-' . get_post_type() ) ) ? true : false;
+    
+    // If the post meta value is set to exclude
+    $risf_exclude = ( 1 == get_post_meta( $post->ID, '_risf_exclude', true ) ) ? true : false;
+    
+    // Overide $risf_exclude if the post has just been edite
+    if ( 1 == $_POST['_risf_exclude'] )
+        $risf_exclude = true;
+    if ( 'empty' == $_POST['_risf_exclude'] )
+        $risf_exclude = false;
+ 
     // Only do something if:
     //  1. the current post type is checked in user settings, AND
     //  2. the metabox to exclude this specific post/page isn't checked
-    if ( 1 == get_option( 'risf-post-type-' . get_post_type() ) && 1 != get_post_meta( $post->ID, '_risf_exclude', true ) ) {
+    if ( $include_post_type && !$risf_exclude ) {
 
         /**
          * Parsing Method 1: HTML Purifier
@@ -85,7 +97,7 @@ function clean_post_content( $content ) {
         }
 
     }
-
+    
     return $content;
     
 }
