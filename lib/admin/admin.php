@@ -302,8 +302,7 @@ function risf_do_meta_box( $post, $metabox ) {
 	$value = get_post_meta( $post->ID, '_risf_exclude', true );
 
 	echo '<input type="hidden" id="risf-exclude-risf-empty" name="_risf_exclude" value="empty" />';
-	echo '<input type="checkbox" id="risf-exclude" name="_risf_exclude" value="1" ' . checked( $value, '1', false ). '/> <label for="risf-exclude">Don\'t apply to this ' . $metabox['args']['post_type'] . '</label>';
-	echo '<br /><br /><em>Note: when checking/unchecking this box using the "Content" removal method, please update the post/page twice to see changes.';
+	echo '<input type="checkbox" id="risf-exclude" name="_risf_exclude" value="1" ' . checked( $value, '1', false ). '/> <label for="risf-exclude">Don\'t apply to this ' . strtolower( $metabox['args']['post_type'] ) . '</label>';
 
 }
 
