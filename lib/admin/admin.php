@@ -71,11 +71,11 @@ function risf_register_settings() {
 			'type' => 'radio',
 			'options' => array (
 				'htmlpurify' => array(
-					'label' => __( 'HTML Purify', 'risf' ),
+					'label' => __( '<b>HTML Purify</b>', 'risf' ),
 					'description' => __( 'More thorough. Automatically completes unclosed tags, removes malicious code, ensures standards compliance - <a href="http://htmlpurifier.org/">read more</a>.', 'risf' )
 				),
 				'regex' => array(
-					'label' => __( 'Regex', 'risf' ),
+					'label' => __( '<b>Regex</b>', 'risf' ),
 					'description' => __( 'Less thorough. Uses simple pattern matching. Try using this method if the HTML Purify method is doing more than you want.', 'risf' )
 				),
 			),
@@ -95,12 +95,12 @@ function risf_register_settings() {
 			'type' => 'radio',
 			'options' => array (
 				'output' => array(
-					'label' => __( 'Output', 'risf' ),
-					'description' => __( 'Filters output. Preserves styles/fonts in database, but filters the front-end output - uses <code>the_content</code> filter', 'risf' )
+					'label' => __( '<b>Output</b>', 'risf' ),
+					'description' => __( 'Filters output. Preserves styles/fonts in database, but filters the front-end output - uses <code>the_content</code> filter.', 'risf' )
 				),
 				'content' => array(
-					'label' => __( 'Content', 'risf' ),
-					'description' => __( 'Warning: Filters actual content. Removes styles/fonts when post/page content is saved - uses <code>content_save_pre</code> filter.<br />Note: this method works on future saves, and will not retroactively modify post/page content.', 'risf' )
+					'label' => __( '<b>Content</b>', 'risf' ),
+					'description' => __( '<b>Warning:</b> Filters actual content. Removes styles/fonts when post/page content is saved - uses <code>content_save_pre</code> filter.<br />Note: this method works on future saves, and will not retroactively modify post/page content.', 'risf' )
 				),
 			),
 			'default' => 'output',
@@ -239,7 +239,7 @@ function risf_output_fields( $field ) {
 			$i = 1;
 			foreach ( $field['args']['options'] as $option => $option_array ) {
 				echo (1 != $i ? '<br />' : '') . '<input name="' . $field['id'] . '" id="' . $field['id'] . '-' . $option_array['label'] . '" type="' . $type . '" value="' . $option . '"' . checked( get_option( $field['id'] ), $option, false ) . '" /> ';
-				echo '<label for="' . $field['id'] . '-' . $option_array['label'] . '"><b>' . $option_array['label'] . '</b></label>'; 
+				echo '<label for="' . $field['id'] . '-' . $option_array['label'] . '">' . $option_array['label'] . '</label>'; 
 				if ( !empty( $option_array['description'] ) ) {
 					if ( isset( $field['args']['label_location'] ) && 'below' == $field['args']['label_location'] )
 						echo '<br />';
