@@ -33,16 +33,20 @@ function clean_post_content( $content ) {
 
     global $post;
 
+    if ( !$post )
+        return;
+
     // Whether this post type is included in the plugin settings
     $include_post_type = ( 1 == get_option( 'risf-post-type-' . get_post_type() ) ) ? true : false;
     
     // If the post meta value is set to exclude
     $risf_exclude = ( 1 == get_post_meta( $post->ID, '_risf_exclude', true ) ) ? true : false;
     
-    // Overide $risf_exclude if the post has just been edite
-    if ( 1 == $_POST['_risf_exclude'] )
+    // Overide $risf_exclude if the post has just been edited
+    $exclude_meta = isset( $_POST['_risf_exclude'] ) ? $_POST['_risf_exclude'] : '';
+    if ( 1 == $exclude_meta )
         $risf_exclude = true;
-    if ( 'empty' == $_POST['_risf_exclude'] )
+    elseif ( 'empty' == $exclude_meta )
         $risf_exclude = false;
  
     // Only do something if:
@@ -90,8 +94,7 @@ function clean_post_content( $content ) {
             
             // Remove <span> tags that are empty
             if ( 1 == get_option( 'risf-empty-span-elements' ) ) {
-                $content = preg_replace( '/\s*<\s*span\s*>\s*/', '', stripslashes( $content ) );
-                $content = preg_replace( '/\s*<\/\s*span\s*>\s*/', '', stripslashes( $content ) );
+                $content = preg_replace( '/\s*<\s*span\s*>\s*<\/\s*span\s*>/', '', stripslashes( $content ) );
             }
 
         }
@@ -110,4 +113,3 @@ if ( 'output' == get_option( 'risf-removal-method' ) )
 // Removal Method 2: Filter Content
 if ( 'content' == get_option( 'risf-removal-method' ) )
     add_filter( 'content_save_pre', 'clean_post_content', get_option( 'risf-filter-priority' ), 1 );
-
